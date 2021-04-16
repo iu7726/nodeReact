@@ -6,7 +6,8 @@ const cookieParser = require('cookie-parser');
 
 const config = require('./config/key');
 
-const { User } = require("./Models/User");
+const { User } = require('./Models/User');
+const { auth } = require('./middleware/auth');
 
 //application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({extended: true}));
@@ -26,7 +27,7 @@ app.get('/', (req, res) => {
 	res.send('Hello World!')
 })
 
-app.post('/register',(req, res) => {
+app.post('/api/users/register',(req, res) => {
 	//회원 가입
 	const user = new User(req.body)
 	
@@ -39,7 +40,7 @@ app.post('/register',(req, res) => {
 
 })
 
-app.post('/login', (req, res) => {
+app.post('/api/users/login', (req, res) => {
 	// 로그인
 
 	// 요청된 이메일을 DB에서 찾음
@@ -64,6 +65,21 @@ app.post('/login', (req, res) => {
 		})
 	});
 	
+})
+
+app.get('/api/users/auth', auth, (req, res) => {
+	res.status(200).json({ user: req.user })
+})
+
+app.get('/api/users/logout', auth, (req, res) => {
+	User.findOneAndUpdate(
+		{ _id: req.user._id }, 
+		{ token: "" }, 
+		(err, user) => {
+			if (err) return res.json({ success: false, err });
+			return res.status(200).send({ success: true });
+		}
+	)
 })
 
 app.listen(port, () => {
